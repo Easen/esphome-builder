@@ -10,11 +10,44 @@ esphome:
 api:
   encryption:
     key: !secret esp32_bluetooth_proxy_2_api_encryption_key
-bluetooth_proxy:
-  active: true
-  cache_services: true
-# logger:
-#   level: VERBOSE
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+esp32_ble:
+  max_connections: 5
+bluetooth_proxy:
+  connection_slots: 5
+debug:
+  update_interval: 5min # How often to check the memory.
+sensor:
+  # Creates a sensor in Home Assistant with the free memory value.
+  - platform: debug
+    free:
+      name: "Heap Free"
+      unit_of_measurement: "B" # B for Bytes
+      icon: "mdi:memory"
+  - platform: uptime
+    name: Uptime
+    id: uptime_sensor
+    entity_category: diagnostic
+  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "Signal %"
+    entity_category: "diagnostic"
+    device_class: ""
+safe_mode:
+text_sensor:
+  # Creates a sensor that shows the reason for the last reboot.
+  - platform: debug
+    reset_reason:
+      name: "Reset Reason"
+      icon: "mdi:information-outline"
+web_server:
